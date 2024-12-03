@@ -9,6 +9,7 @@
     #     gather_subset: os_family
     #   register: os_info
 
+    # Debain/Ubuntu systems
     - name: Update Debain/Ubuntu repositories and upgrade packages
       when: ansible_pkg_mgr == 'apt'
       block:
@@ -35,6 +36,7 @@
             autoclean: yes
           # when: os_info.ansible_facts['os_family'] == 'Debian'
 
+    # Fedora systems
     - name: Update Redhat/Fedora repositories and upgrade packages
       when: ansible_pkg_mgr == 'dnf'
       block:
@@ -61,7 +63,8 @@
             state: absent
             autoremove: yes
           # when: os_info.ansible_facts['os_family'] == 'RedHat'
-
+    
+    # Alpine systems
     - name: Update Alpine repositories and upgrade packages
       when: ansible_pkg_mgr == 'apk'
       block:
@@ -84,3 +87,29 @@
         - name: Alpine - Clean up unused packages
           shell: apk cache clean
           # when: os_info.ansible_facts['os_family'] == 'Alpine'
+
+    # CentOS systems
+    - name: Update CentOS repositories and upgrade packages
+      when: ansible_pkg_mgr == 'yum'
+      block:
+        - name: CentOS (YUM) - Update repository cache
+          yum:
+            update_cache: yes
+          # when: os_info.ansible_facts['os_family'] == 'RedHat' and os_info.ansible_facts['distribution'] != 'Fedora'
+
+        - name: CentOS (YUM) - Upgrade all packages
+          yum:
+            name: "*"
+            state: latest
+          # when: os_info.ansible_facts['os_family'] == 'RedHat' and os_info.ansible_facts['distribution'] != 'Fedora'
+
+        - name: CentOS (YUM) - Update kernel
+          yum:
+            name: kernel
+            state: latest
+          # when: os_info.ansible_facts['os_family'] == 'RedHat' and os_info.ansible_facts['distribution'] != 'Fedora'
+
+        - name: CentOS (YUM) - Clean up unused packages
+          yum:
+            autoremove: yes
+          # when: os_info.ansible_facts['os_family'] == 'RedHat' and os_info.ansible_facts['distribution'] != 'Fedora'
