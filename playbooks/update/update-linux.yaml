@@ -23,12 +23,12 @@
             upgrade: dist
           # when: os_info.ansible_facts['os_family'] == 'Debian'
 
-        - name: Debian/Ubuntu - Update kernel
-          shell: |
-            apt-get install --only-upgrade $(dpkg -l | grep linux-image | awk '{print $2}')
-          register: kernel_update
-          changed_when: "'upgraded' in kernel_update.stdout"
-          # when: os_info.ansible_facts['os_family'] == 'Debian'
+        # - name: Debian/Ubuntu - Update kernel
+        #   shell: |
+        #     apt-get install --only-upgrade $(dpkg -l | grep linux-image | awk '{print $2}')
+        #   register: kernel_update
+        #   changed_when: "'upgraded' in kernel_update.stdout"
+        #   # when: os_info.ansible_facts['os_family'] == 'Debian'
 
         - name: Debian/Ubuntu - Clean up unused packages
           apt:
