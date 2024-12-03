@@ -1,0 +1,78 @@
+---
+- name: Manage updates on various Linux distributions
+  hosts: all
+  become: yes
+  tasks:
+    - name: Determine operating system
+      ansible.builtin.setup:
+        gather_subset: os_family
+      register: os_info
+
+    - name: Update repositories and upgrade packages
+      block:
+        - name: Debian/Ubuntu - Update repository cache
+          apt:
+            update_cache: yes
+          when: os_info.ansible_facts['os_family'] == 'Debian'
+
+        - name: Debian/Ubuntu - Upgrade all packages
+          apt:
+            upgrade: dist
+          when: os_info.ansible_facts['os_family'] == 'Debian'
+
+        - name: Debian/Ubuntu - Update kernel
+          shell: |
+            apt-get install --only-upgrade $(dpkg -l | grep linux-image | awk '{print $2}')
+          register: kernel_update
+          changed_when: "'upgraded' in kernel_update.stdout"
+          when: os_info.ansible_facts['os_family'] == 'Debian'
+
+        - name: Debian/Ubuntu - Clean up unused packages
+          apt:
+            autoremove: yes
+            autoclean: yes
+          when: os_info.ansible_facts['os_family'] == 'Debian'
+
+        - name: Fedora - Update repository cache
+          dnf:
+            update_cache: yes
+          when: os_info.ansible_facts['os_family'] == 'RedHat'
+
+        - name: Fedora - Upgrade all packages
+          dnf:
+            name: "*"
+            state: latest
+          when: os_info.ansible_facts['os_family'] == 'RedHat'
+
+        - name: Fedora - Update kernel
+          dnf:
+            name: kernel
+            state: latest
+          when: os_info.ansible_facts['os_family'] == 'RedHat'
+
+        - name: Fedora - Clean up unused packages
+          dnf:
+            name: "*"
+            state: absent
+            autoremove: yes
+          when: os_info.ansible_facts['os_family'] == 'RedHat'
+
+        - name: Alpine - Update repository cache
+          apk:
+            update_cache: yes
+          when: os_info.ansible_facts['os_family'] == 'Alpine'
+
+        - name: Alpine - Upgrade all packages
+          apk:
+            upgrade: yes
+          when: os_info.ansible_facts['os_family'] == 'Alpine'
+
+        - name: Alpine - Update kernel
+          shell: apk add --upgrade linux-virt
+          register: kernel_update
+          changed_when: "'upgrading' in kernel_update.stdout"
+          when: os_info.ansible_facts['os_family'] == 'Alpine'
+
+        - name: Alpine - Clean up unused packages
+          shell: apk cache clean
+          when: os_info.ansible_facts['os_family'] == 'Alpine'
